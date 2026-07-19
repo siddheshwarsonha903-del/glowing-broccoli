@@ -1,332 +1,194 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sudoku Web App</title>
+    <title>Neon Runner</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <style>
-        :root {
-            --slate-bg: #0f172a;
-            --slate-card: #1e293b;
-            --teal-primary: #008080;
-            --teal-glow: #00e5e5;
-            --text-light: #f1f5f9;
-        }
-
         body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background-color: var(--slate-bg);
-            color: var(--text-light);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
             margin: 0;
-            padding: 10px;
-            box-sizing: border-box;
-            overflow-x: hidden;
-        }
-
-        h1 {
-            color: var(--teal-primary);
-            font-size: 1.8rem;
-            margin: 5px 0;
-            text-shadow: 0 0 10px rgba(0, 128, 128, 0.4);
-        }
-
-        .stats-panel {
+            padding: 0;
+            background-color: #0f172a; /* Slate Background */
             display: flex;
-            justify-content: space-between;
-            width: 100%;
-            max-width: 360px;
-            margin-bottom: 10px;
-            font-size: 0.95rem;
-            color: #94a3b8;
-            padding: 0 5px;
-            box-sizing: border-box;
-        }
-
-        #timer {
-            font-weight: bold;
-            color: var(--teal-glow);
-        }
-
-        .game-container {
-            background-color: var(--slate-card);
-            border-radius: 12px;
-            padding: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-            max-width: 380px;
-            box-sizing: border-box;
-        }
-
-        /* Responsive Grid Framework */
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(9, 1fr);
-            width: 100%;
-            aspect-ratio: 1 / 1;
-            border: 3px solid var(--teal-primary);
-            background-color: var(--slate-bg);
-            margin-bottom: 15px;
-        }
-
-        .cell {
-            display: flex;
-            align-items: center;
             justify-content: center;
-            font-size: 1.25rem;
-            font-weight: bold;
-            border: 1px solid #334155;
-            background: transparent;
-            color: var(--text-light);
-            cursor: pointer;
-            user-select: none;
-            transition: all 0.15s ease;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
         }
-
-        /* 3x3 Block Boundaries */
-        .cell:nth-child(3n) { border-right: 2px solid var(--teal-primary); }
-        .cell:nth-child(9n) { border-right: none; }
-        .row-boundary { border-bottom: 2px solid var(--teal-primary); }
-
-        .cell.selected {
-            background-color: rgba(0, 128, 128, 0.3);
-            box-shadow: inset 0 0 8px var(--teal-glow);
+        canvas {
+            box-shadow: 0 0 25px #008080; /* Beautiful Teal Glow */
+            border-radius: 12px;
         }
-
-        .cell.locked {
-            background-color: rgba(15, 23, 42, 0.5);
-            color: #64748b;
-            cursor: not-allowed;
-        }
-
-        /* Mobile Input Keypad */
-        .keypad {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 8px;
-            width: 100%;
-            margin-bottom: 15px;
-        }
-
-        .key {
-            background-color: #334155;
-            color: white;
-            border: none;
-            padding: 12px 0;
-            font-size: 1.1rem;
-            font-weight: bold;
-            border-radius: 6px;
-            cursor: pointer;
-            text-align: center;
-            transition: background 0.2s;
-        }
-
-        .key:active {
-            background-color: var(--teal-primary);
-        }
-
-        .key.erase {
-            background-color: #ef4444;
-            grid-column: span 1;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            width: 100%;
-        }
-
-        .btn {
-            flex: 1;
-            background-color: var(--teal-primary);
-            color: white;
-            border: none;
-            padding: 12px 0;
-            font-size: 0.95rem;
-            font-weight: bold;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn:active {
-            transform: scale(0.98);
-        }
-
-        .btn-secondary { background-color: #475569; }
     </style>
 </head>
 <body>
 
-    <h1>SUDOKU APP</h1>
+<script>
+const config = {
+    type: Phaser.AUTO,
+    backgroundColor: '#0f172a', // Slate Background
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 1100 },
+            debug: false
+        }
+    },
+    scale: {
+        mode: Phaser.Scale.FIT, // मोबाइल स्क्रीन पर ऑटोमैटिक फिट करने के लिए
+        autoCenter: Phaser.Scale.CENTER_BOTH, // स्क्रीन के बीच में रखने के लिए
+        width: 800,
+        height: 400
+    },
+    scene: {
+        preload: preload,
+        create: create,
+        update: update
+    }
+};
+
+const game = new Phaser.Game(config);
+let player;
+let platforms;
+let cursors;
+let score = 0;
+let scoreText;
+let obstacleTimer;
+let obstacles;
+let isGameOver = false;
+
+function preload() {
+    // बिना बाहरी इमेज के इन-गेम ग्राफिक्स जनरेट करेंगे
+}
+
+function create() {
+    isGameOver = false;
+
+    // 1. NEON RUNNER Title Text with Teal Glow
+    let titleText = this.add.text(400, 50, 'NEON RUNNER', { 
+        fontSize: '42px', 
+        fill: '#008080', 
+        fontWeight: 'bold', 
+        fontFamily: 'Arial' 
+    }).setOrigin(0.5);
+    titleText.setShadow(0, 0, '#008080', 20, true, true);
+
+    // Score Text
+    scoreText = this.add.text(20, 20, 'Score: 0', { 
+        fontSize: '22px', 
+        fill: '#ffffff', 
+        fontWeight: 'bold',
+        fontFamily: 'Arial' 
+    });
+
+    // 2. Base Platform Setup
+    platforms = this.physics.add.staticGroup();
     
-    <div class="game-container">
-        <div class="stats-panel">
-            <span>⏱️ <span id="timer">00:00</span></span>
-            <span>Mode: <strong style="color: var(--teal-glow);">Touch Play</strong></span>
-        </div>
+    let groundGraphics = this.add.graphics();
+    groundGraphics.fillStyle(0x008080, 1); // Teal Color
+    groundGraphics.fillRect(0, 0, 800, 40);
+    groundGraphics.generateTexture('ground', 800, 40);
+    
+    platforms.create(400, 380, 'ground').refreshBody();
 
-        <div class="grid" id="sudoku-grid"></div>
+    // 3. Player (Cyan glowing cube)
+    let playerGraphics = this.add.graphics();
+    playerGraphics.fillStyle(0x00ffff, 1); // Bright Cyan/Teal
+    playerGraphics.fillRect(0, 0, 32, 32);
+    playerGraphics.generateTexture('player', 32, 32);
 
-        <!-- Touch Screen Keypad -->
-        <div class="keypad">
-            <button class="key" onclick="pressNumber(1)">1</button>
-            <button class="key" onclick="pressNumber(2)">2</button>
-            <button class="key" onclick="pressNumber(3)">3</button>
-            <button class="key" onclick="pressNumber(4)">4</button>
-            <button class="key" onclick="pressNumber(5)">5</button>
-            <button class="key" onclick="pressNumber(6)">6</button>
-            <button class="key" onclick="pressNumber(7)">7</button>
-            <button class="key" onclick="pressNumber(8)">8</button>
-            <button class="key" onclick="pressNumber(9)">9</button>
-            <button class="key erase" onclick="pressNumber(0)">❌</button>
-        </div>
-        
-        <div class="btn-group">
-            <button class="btn" onclick="checkAnswers()">Verify</button>
-            <button class="btn btn-secondary" onclick="resetGame()">Reset</button>
-        </div>
-    </div>
+    player = this.physics.add.sprite(120, 300, 'player');
+    player.setCollideWorldBounds(true);
+    
+    // Colliders
+    this.physics.add.collider(player, platforms);
 
-    <script>
-        const grid = document.getElementById('sudoku-grid');
-        let timerInterval;
-        let secondsElapsed = 0;
-        let selectedCell = null;
+    // 4. Obstacles Setup (Neon Red)
+    obstacles = this.physics.add.group();
+    this.physics.add.collider(obstacles, platforms);
+    
+    // Collision detection for Game Over
+    this.physics.add.overlap(player, obstacles, gameOver, null, this);
 
-        const initialBoard = [
-            [5, 3, 0, 0, 7, 0, 0, 0, 0],
-            [6, 0, 0, 1, 9, 5, 0, 0, 0],
-            [0, 9, 8, 0, 0, 0, 0, 6, 0],
-            [8, 0, 0, 0, 6, 0, 0, 0, 3],
-            [4, 0, 0, 8, 0, 3, 0, 0, 1],
-            [7, 0, 0, 0, 2, 0, 0, 0, 6],
-            [0, 6, 0, 0, 0, 0, 2, 8, 0],
-            [0, 0, 0, 4, 1, 9, 0, 0, 5],
-            [0, 0, 0, 0, 8, 0, 0, 7, 9]
-        ];
-
-        let boardState = JSON.parse(JSON.stringify(initialBoard));
-
-        const solution = [
-            [5, 3, 4, 6, 7, 8, 9, 1, 2],
-            [6, 7, 2, 1, 9, 5, 3, 4, 8],
-            [1, 9, 8, 3, 4, 2, 5, 6, 7],
-            [8, 5, 9, 7, 6, 1, 4, 2, 3],
-            [4, 2, 6, 8, 5, 3, 7, 9, 1],
-            [7, 1, 3, 9, 2, 4, 8, 5, 6],
-            [9, 6, 1, 5, 3, 7, 2, 8, 4],
-            [2, 8, 7, 4, 1, 9, 6, 3, 5],
-            [3, 4, 5, 2, 8, 6, 1, 7, 9]
-        ];
-
-        function startTimer() {
-            clearInterval(timerInterval);
-            secondsElapsed = 0;
-            timerInterval = setInterval(() => {
-                secondsElapsed++;
-                const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
-                const secs = String(secondsElapsed % 60).padStart(2, '0');
-                document.getElementById('timer').innerText = `${mins}:${secs}`;
-            }, 1000);
+    // Controls
+    cursors = this.input.keyboard.createCursorKeys();
+    
+    // मोबाइल टच के लिए पूरी स्क्रीन पर कहीं भी टैप करने पर जंप
+    this.input.on('pointerdown', function () {
+        if (isGameOver) {
+            restartGame.call(this.scene.scene);
+        } else if (player.body.touching.down) {
+            player.setVelocityY(-480);
         }
+    }, this);
 
-        function drawGrid() {
-            grid.innerHTML = '';
-            for (let r = 0; r < 9; r++) {
-                for (let c = 0; c < 9; c++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'cell';
-                    cell.dataset.row = r;
-                    cell.dataset.col = c;
+    // हर 1.5 सेकंड में एक बाधा आएगी
+    obstacleTimer = this.time.addEvent({
+        delay: 1500,
+        callback: spawnObstacle,
+        callbackScope: this,
+        loop: true
+    });
+}
 
-                    if (r === 2 || r === 5) cell.classList.add('row-boundary');
+function update() {
+    if (isGameOver) return;
 
-                    if (initialBoard[r][c] !== 0) {
-                        cell.innerText = initialBoard[r][c];
-                        cell.classList.add('locked');
-                    } else {
-                        if (boardState[r][c] !== 0) {
-                            cell.innerText = boardState[r][c];
-                        }
-                        cell.addEventListener('click', () => selectCell(cell));
-                    }
-                    grid.appendChild(cell);
-                }
-            }
-        }
+    // Keyboard controls (Space or Up Arrow for Jump)
+    if ((cursors.up.isDown || cursors.space.isDown) && player.body.touching.down) {
+        player.setVelocityY(-480);
+    }
 
-        function selectCell(cell) {
-            if (selectedCell) selectedCell.classList.remove('selected');
-            selectedCell = cell;
-            selectedCell.classList.add('selected');
-        }
+    // स्कोर अपडेट
+    score += 1;
+    scoreText.setText('Score: ' + Math.floor(score / 10));
+}
 
-        function pressNumber(num) {
-            if (!selectedCell) return;
-            const r = parseInt(selectedCell.dataset.row);
-            const c = parseInt(selectedCell.dataset.col);
+function spawnObstacle() {
+    if (isGameOver) return;
 
-            if (num === 0) {
-                selectedCell.innerText = '';
-                boardState[r][c] = 0;
-            } else {
-                selectedCell.innerText = num;
-                boardState[r][c] = num;
-            }
-            // Reset validation style on change
-            selectedCell.style.color = 'var(--text-light)';
-        }
+    let obstacleGraphics = this.add.graphics();
+    obstacleGraphics.fillStyle(0xff0055, 1); // Glowing Neon Red/Pink
+    obstacleGraphics.fillRect(0, 0, 24, 44);
+    obstacleGraphics.generateTexture('obstacle', 24, 44);
 
-        function checkAnswers() {
-            const cells = document.querySelectorAll('.cell:not(.locked)');
-            let allCorrect = true;
+    let obstacle = obstacles.create(850, 335, 'obstacle');
+    // गेम जैसे-जैसे आगे बढ़ेगा, स्पीड थोड़ी बढ़ती जाएगी
+    obstacle.setVelocityX(-320 - (score * 0.04)); 
+    obstacle.setCollideWorldBounds(false);
+    
+    // स्क्रीन से बाहर जाने पर मेमोरी से डिलीट करना
+    obstacle.checkWorldBounds = true;
+    obstacle.outOfBoundsKill = true;
+}
 
-            cells.forEach(cell => {
-                const r = parseInt(cell.dataset.row);
-                const c = parseInt(cell.dataset.col);
-                const val = boardState[r][c];
+function gameOver() {
+    isGameOver = true;
+    this.physics.pause();
+    obstacleTimer.destroy();
+    player.setTint(0xff0000); // Player turns red on crash
+    
+    let overText = this.add.text(400, 200, 'GAME OVER\n\nTap Screen or Press Space to Restart', { 
+        fontSize: '28px', 
+        fill: '#ff0055', 
+        fontWeight: 'bold',
+        align: 'center',
+        fontFamily: 'Arial' 
+    }).setOrigin(0.5);
+    overText.setShadow(0, 0, '#ff0055', 10, true, true);
+    
+    // Keyboard से रिस्टार्ट करने के लिए
+    this.input.keyboard.once('keydown-SPACE', () => {
+        restartGame.call(this);
+    });
+}
 
-                if (val === 0) {
-                    allCorrect = false;
-                } else if (val === solution[r][c]) {
-                    cell.style.color = '#10b981'; // Green
-                } else {
-                    cell.style.color = '#ef4444'; // Red
-                    allCorrect = false;
-                }
-            });
+function restartGame() {
+    score = 0;
+    this.restart();
+}
+</script>
 
-            if (allCorrect) {
-                clearInterval(timerInterval);
-                alert('🎉 Kamaal kar diya! Pura Sudoku sahi solve hua hai!');
-            } else {
-                alert('⚠️ Grid me kuch galat numbers hain, check karein!');
-            }
-        }
-
-        function resetGame() {
-            boardState = JSON.parse(JSON.stringify(initialBoard));
-            selectedCell = null;
-            drawGrid();
-            startTimer();
-        }
-
-        // Run
-        drawGrid();
-        startTimer();
-
-        // Adsterra Smartlink Integration
-        document.addEventListener('click', function() {
-            window.open('https://www.effectivecpmnetwork.com/vm4c1vsd?key=fc994438722197ee4f4977d89edde543', '_blank');
-        }, { once: true });
-    </script>
 </body>
 </html>
