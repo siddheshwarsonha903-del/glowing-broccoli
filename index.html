@@ -1,194 +1,332 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neon Runner</title>
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+    <title>Sudoku Web App</title>
     <style>
+        :root {
+            --slate-bg: #0f172a;
+            --slate-card: #1e293b;
+            --teal-primary: #008080;
+            --teal-glow: #00e5e5;
+            --text-light: #f1f5f9;
+        }
+
         body {
-            margin: 0;
-            padding: 0;
-            background-color: #0f172a; /* Slate Background */
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--slate-bg);
+            color: var(--text-light);
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-            height: 100vh;
-            overflow: hidden;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow-x: hidden;
         }
-        canvas {
-            box-shadow: 0 0 25px #008080; /* Teal Glow */
+
+        h1 {
+            color: var(--teal-primary);
+            font-size: 1.8rem;
+            margin: 5px 0;
+            text-shadow: 0 0 10px rgba(0, 128, 128, 0.4);
+        }
+
+        .stats-panel {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 360px;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            color: #94a3b8;
+            padding: 0 5px;
+            box-sizing: border-box;
+        }
+
+        #timer {
+            font-weight: bold;
+            color: var(--teal-glow);
+        }
+
+        .game-container {
+            background-color: var(--slate-card);
             border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 380px;
+            box-sizing: border-box;
         }
+
+        /* Responsive Grid Framework */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border: 3px solid var(--teal-primary);
+            background-color: var(--slate-bg);
+            margin-bottom: 15px;
+        }
+
+        .cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: bold;
+            border: 1px solid #334155;
+            background: transparent;
+            color: var(--text-light);
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.15s ease;
+        }
+
+        /* 3x3 Block Boundaries */
+        .cell:nth-child(3n) { border-right: 2px solid var(--teal-primary); }
+        .cell:nth-child(9n) { border-right: none; }
+        .row-boundary { border-bottom: 2px solid var(--teal-primary); }
+
+        .cell.selected {
+            background-color: rgba(0, 128, 128, 0.3);
+            box-shadow: inset 0 0 8px var(--teal-glow);
+        }
+
+        .cell.locked {
+            background-color: rgba(15, 23, 42, 0.5);
+            color: #64748b;
+            cursor: not-allowed;
+        }
+
+        /* Mobile Input Keypad */
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .key {
+            background-color: #334155;
+            color: white;
+            border: none;
+            padding: 12px 0;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            transition: background 0.2s;
+        }
+
+        .key:active {
+            background-color: var(--teal-primary);
+        }
+
+        .key.erase {
+            background-color: #ef4444;
+            grid-column: span 1;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .btn {
+            flex: 1;
+            background-color: var(--teal-primary);
+            color: white;
+            border: none;
+            padding: 12px 0;
+            font-size: 0.95rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary { background-color: #475569; }
     </style>
 </head>
 <body>
 
-<script>
-// आपका Adsterra Direct Link
-const AD_LINK = "https://www.effectivecpmnetwork.com/ked54dtp?key=c6c7a9147cbc1f9a73a66f3b0482881e";
-
-const config = {
-    type: Phaser.AUTO,
-    backgroundColor: '#0f172a',
-    physics: {
-        default: 'arcade',
-        arcade: {
-            gravity: { y: 1100 },
-            debug: false
-        }
-    },
-    scale: {
-        mode: Phaser.Scale.FIT,
-        autoCenter: Phaser.Scale.CENTER_BOTH,
-        width: 800,
-        height: 400
-    },
-    scene: {
-        preload: preload,
-        create: create,
-        update: update
-    }
-};
-
-const game = new Phaser.Game(config);
-let player;
-let platforms;
-let cursors;
-let score = 0;
-let scoreText;
-let obstacleTimer;
-let obstacles;
-let isGameOver = false;
-
-function preload() {}
-
-function create() {
-    isGameOver = false;
-
-    // Title Text with Teal Glow
-    let titleText = this.add.text(400, 40, 'NEON RUNNER', { 
-        fontSize: '38px', 
-        fill: '#008080', 
-        fontWeight: 'bold', 
-        fontFamily: 'Arial' 
-    }).setOrigin(0.5);
-    titleText.setShadow(0, 0, '#008080', 20, true, true);
-
-    // Score Text
-    scoreText = this.add.text(20, 20, 'Score: 0', { 
-        fontSize: '22px', 
-        fill: '#ffffff', 
-        fontWeight: 'bold',
-        fontFamily: 'Arial' 
-    });
-
-    // Platforms
-    platforms = this.physics.add.staticGroup();
-    let groundGraphics = this.add.graphics();
-    groundGraphics.fillStyle(0x008080, 1);
-    groundGraphics.fillRect(0, 0, 800, 40);
-    groundGraphics.generateTexture('ground', 800, 40);
-    platforms.create(400, 380, 'ground').refreshBody();
-
-    // Player
-    let playerGraphics = this.add.graphics();
-    playerGraphics.fillStyle(0x00ffff, 1);
-    playerGraphics.fillRect(0, 0, 32, 32);
-    playerGraphics.generateTexture('player', 32, 32);
-
-    player = this.physics.add.sprite(120, 300, 'player');
-    player.setCollideWorldBounds(true);
-    this.physics.add.collider(player, platforms);
-
-    // Obstacles
-    obstacles = this.physics.add.group();
-    this.physics.add.collider(obstacles, platforms);
-    this.physics.add.overlap(player, obstacles, gameOver, null, this);
-
-    // Controls
-    cursors = this.input.keyboard.createCursorKeys();
+    <h1>SUDOKU APP</h1>
     
-    // Jump on Screen Tap
-    this.input.on('pointerdown', function () {
-        if (!isGameOver && player.body.touching.down) {
-            player.setVelocityY(-480);
-        }
-    }, this);
+    <div class="game-container">
+        <div class="stats-panel">
+            <span>⏱️ <span id="timer">00:00</span></span>
+            <span>Mode: <strong style="color: var(--teal-glow);">Touch Play</strong></span>
+        </div>
 
-    obstacleTimer = this.time.addEvent({
-        delay: 1500,
-        callback: spawnObstacle,
-        callbackScope: this,
-        loop: true
-    });
-}
+        <div class="grid" id="sudoku-grid"></div>
 
-function update() {
-    if (isGameOver) return;
-
-    if ((cursors.up.isDown || cursors.space.isDown) && player.body.touching.down) {
-        player.setVelocityY(-480);
-    }
-
-    score += 1;
-    scoreText.setText('Score: ' + Math.floor(score / 10));
-}
-
-function spawnObstacle() {
-    if (isGameOver) return;
-
-    let obstacleGraphics = this.add.graphics();
-    obstacleGraphics.fillStyle(0xff0055, 1);
-    obstacleGraphics.fillRect(0, 0, 24, 44);
-    obstacleGraphics.generateTexture('obstacle', 24, 44);
-
-    let obstacle = obstacles.create(850, 335, 'obstacle');
-    obstacle.setVelocityX(-320 - (score * 0.04)); 
-    obstacle.setCollideWorldBounds(false);
-    obstacle.checkWorldBounds = true;
-    obstacle.outOfBoundsKill = true;
-}
-
-function gameOver() {
-    isGameOver = true;
-    this.physics.pause();
-    obstacleTimer.destroy();
-    player.setTint(0xff0000);
-    
-    // Game Over Text
-    let overText = this.add.text(400, 160, 'GAME OVER', { 
-        fontSize: '36px', 
-        fill: '#ff0055', 
-        fontWeight: 'bold',
-        fontFamily: 'Arial' 
-    }).setOrigin(0.5);
-    overText.setShadow(0, 0, '#ff0055', 10, true, true);
-
-    // Clickable Ad / Restart Button
-    let btnBg = this.add.graphics();
-    btnBg.fillStyle(0x008080, 1);
-    btnBg.fillRoundedRect(250, 240, 300, 60, 12);
-
-    let btnText = this.add.text(400, 270, 'PLAY AGAIN 🚀', {
-        fontSize: '22px',
-        fill: '#ffffff',
-        fontWeight: 'bold',
-        fontFamily: 'Arial'
-    }).setOrigin(0.5);
-
-    // Interactive Button Actions
-    let restartBtn = this.add.zone(400, 270, 300, 60).setInteractive();
-
-    restartBtn.on('pointerdown', () => {
-        // 1. Adsterra Direct Link को नई टैब में खोलना (Monetization)
-        window.open(AD_LINK, '_blank');
+        <!-- Touch Screen Keypad -->
+        <div class="keypad">
+            <button class="key" onclick="pressNumber(1)">1</button>
+            <button class="key" onclick="pressNumber(2)">2</button>
+            <button class="key" onclick="pressNumber(3)">3</button>
+            <button class="key" onclick="pressNumber(4)">4</button>
+            <button class="key" onclick="pressNumber(5)">5</button>
+            <button class="key" onclick="pressNumber(6)">6</button>
+            <button class="key" onclick="pressNumber(7)">7</button>
+            <button class="key" onclick="pressNumber(8)">8</button>
+            <button class="key" onclick="pressNumber(9)">9</button>
+            <button class="key erase" onclick="pressNumber(0)">❌</button>
+        </div>
         
-        // 2. गेम को रिस्टार्ट करना
-        this.scene.restart();
-    });
-}
-</script>
+        <div class="btn-group">
+            <button class="btn" onclick="checkAnswers()">Verify</button>
+            <button class="btn btn-secondary" onclick="resetGame()">Reset</button>
+        </div>
+    </div>
 
+    <script>
+        const grid = document.getElementById('sudoku-grid');
+        let timerInterval;
+        let secondsElapsed = 0;
+        let selectedCell = null;
+
+        const initialBoard = [
+            [5, 3, 0, 0, 7, 0, 0, 0, 0],
+            [6, 0, 0, 1, 9, 5, 0, 0, 0],
+            [0, 9, 8, 0, 0, 0, 0, 6, 0],
+            [8, 0, 0, 0, 6, 0, 0, 0, 3],
+            [4, 0, 0, 8, 0, 3, 0, 0, 1],
+            [7, 0, 0, 0, 2, 0, 0, 0, 6],
+            [0, 6, 0, 0, 0, 0, 2, 8, 0],
+            [0, 0, 0, 4, 1, 9, 0, 0, 5],
+            [0, 0, 0, 0, 8, 0, 0, 7, 9]
+        ];
+
+        let boardState = JSON.parse(JSON.stringify(initialBoard));
+
+        const solution = [
+            [5, 3, 4, 6, 7, 8, 9, 1, 2],
+            [6, 7, 2, 1, 9, 5, 3, 4, 8],
+            [1, 9, 8, 3, 4, 2, 5, 6, 7],
+            [8, 5, 9, 7, 6, 1, 4, 2, 3],
+            [4, 2, 6, 8, 5, 3, 7, 9, 1],
+            [7, 1, 3, 9, 2, 4, 8, 5, 6],
+            [9, 6, 1, 5, 3, 7, 2, 8, 4],
+            [2, 8, 7, 4, 1, 9, 6, 3, 5],
+            [3, 4, 5, 2, 8, 6, 1, 7, 9]
+        ];
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            secondsElapsed = 0;
+            timerInterval = setInterval(() => {
+                secondsElapsed++;
+                const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
+                const secs = String(secondsElapsed % 60).padStart(2, '0');
+                document.getElementById('timer').innerText = `${mins}:${secs}`;
+            }, 1000);
+        }
+
+        function drawGrid() {
+            grid.innerHTML = '';
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+
+                    if (r === 2 || r === 5) cell.classList.add('row-boundary');
+
+                    if (initialBoard[r][c] !== 0) {
+                        cell.innerText = initialBoard[r][c];
+                        cell.classList.add('locked');
+                    } else {
+                        if (boardState[r][c] !== 0) {
+                            cell.innerText = boardState[r][c];
+                        }
+                        cell.addEventListener('click', () => selectCell(cell));
+                    }
+                    grid.appendChild(cell);
+                }
+            }
+        }
+
+        function selectCell(cell) {
+            if (selectedCell) selectedCell.classList.remove('selected');
+            selectedCell = cell;
+            selectedCell.classList.add('selected');
+        }
+
+        function pressNumber(num) {
+            if (!selectedCell) return;
+            const r = parseInt(selectedCell.dataset.row);
+            const c = parseInt(selectedCell.dataset.col);
+
+            if (num === 0) {
+                selectedCell.innerText = '';
+                boardState[r][c] = 0;
+            } else {
+                selectedCell.innerText = num;
+                boardState[r][c] = num;
+            }
+            // Reset validation style on change
+            selectedCell.style.color = 'var(--text-light)';
+        }
+
+        function checkAnswers() {
+            const cells = document.querySelectorAll('.cell:not(.locked)');
+            let allCorrect = true;
+
+            cells.forEach(cell => {
+                const r = parseInt(cell.dataset.row);
+                const c = parseInt(cell.dataset.col);
+                const val = boardState[r][c];
+
+                if (val === 0) {
+                    allCorrect = false;
+                } else if (val === solution[r][c]) {
+                    cell.style.color = '#10b981'; // Green
+                } else {
+                    cell.style.color = '#ef4444'; // Red
+                    allCorrect = false;
+                }
+            });
+
+            if (allCorrect) {
+                clearInterval(timerInterval);
+                alert('🎉 Kamaal kar diya! Pura Sudoku sahi solve hua hai!');
+            } else {
+                alert('⚠️ Grid me kuch galat numbers hain, check karein!');
+            }
+        }
+
+        function resetGame() {
+            boardState = JSON.parse(JSON.stringify(initialBoard));
+            selectedCell = null;
+            drawGrid();
+            startTimer();
+        }
+
+        // Run
+        drawGrid();
+        startTimer();
+
+        // Adsterra Smartlink Integration
+        document.addEventListener('click', function() {
+            window.open('https://www.effectivecpmnetwork.com/vm4c1vsd?key=fc994438722197ee4f4977d89edde543', '_blank');
+        }, { once: true });
+    </script>
 </body>
 </html>
