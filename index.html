@@ -13,6 +13,12 @@
             --text-light: #f1f5f9;
         }
 
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             font-family: 'Segoe UI', system-ui, sans-serif;
             background-color: var(--slate-bg);
@@ -22,47 +28,43 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            margin: 0;
             padding: 10px;
-            box-sizing: border-box;
             overflow-x: hidden;
         }
 
         h1 {
             color: var(--teal-primary);
-            font-size: 1.8rem;
-            margin: 5px 0;
+            font-size: Clamp(1.6rem, 5vw, 2.2rem);
+            margin: 10px 0;
             text-shadow: 0 0 10px rgba(0, 128, 128, 0.4);
+            text-align: center;
+        }
+
+        .game-container {
+            background-color: var(--slate-card);
+            border-radius: 14px;
+            padding: 14px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 480px; /* लैपटॉप पर सही रहेगा और मोबाइल पर 100% चौड़ाई लेगा */
         }
 
         .stats-panel {
             display: flex;
             justify-content: space-between;
             width: 100%;
-            max-width: 360px;
-            margin-bottom: 10px;
-            font-size: 0.95rem;
+            margin-bottom: 12px;
+            font-size: clamp(0.9rem, 3.5vw, 1.1rem);
             color: #94a3b8;
-            padding: 0 5px;
-            box-sizing: border-box;
+            padding: 0 4px;
         }
 
         #timer {
             font-weight: bold;
             color: var(--teal-glow);
-        }
-
-        .game-container {
-            background-color: var(--slate-card);
-            border-radius: 12px;
-            padding: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-            max-width: 380px;
-            box-sizing: border-box;
         }
 
         /* Responsive Grid Framework */
@@ -74,13 +76,15 @@
             border: 3px solid var(--teal-primary);
             background-color: var(--slate-bg);
             margin-bottom: 15px;
+            border-radius: 4px;
+            overflow: hidden;
         }
 
         .cell {
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.25rem;
+            font-size: clamp(1.2rem, 5vw, 1.6rem); /* स्क्रीन के हिसाब से नंबर बड़े होंगे */
             font-weight: bold;
             border: 1px solid #334155;
             background: transparent;
@@ -96,12 +100,12 @@
         .row-boundary { border-bottom: 2px solid var(--teal-primary); }
 
         .cell.selected {
-            background-color: rgba(0, 128, 128, 0.3);
-            box-shadow: inset 0 0 8px var(--teal-glow);
+            background-color: rgba(0, 128, 128, 0.35);
+            box-shadow: inset 0 0 10px var(--teal-glow);
         }
 
         .cell.locked {
-            background-color: rgba(15, 23, 42, 0.5);
+            background-color: rgba(15, 23, 42, 0.6);
             color: #64748b;
             cursor: not-allowed;
         }
@@ -119,17 +123,18 @@
             background-color: #334155;
             color: white;
             border: none;
-            padding: 12px 0;
-            font-size: 1.1rem;
+            padding: 14px 0;
+            font-size: clamp(1.1rem, 4.5vw, 1.3rem);
             font-weight: bold;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
             text-align: center;
-            transition: background 0.2s;
+            transition: background 0.2s, transform 0.1s;
         }
 
         .key:active {
             background-color: var(--teal-primary);
+            transform: scale(0.95);
         }
 
         .key.erase {
@@ -148,10 +153,10 @@
             background-color: var(--teal-primary);
             color: white;
             border: none;
-            padding: 12px 0;
-            font-size: 0.95rem;
+            padding: 14px 0;
+            font-size: clamp(1rem, 4vw, 1.1rem);
             font-weight: bold;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s;
         }
@@ -281,7 +286,6 @@
                 selectedCell.innerText = num;
                 boardState[r][c] = num;
             }
-            // Reset validation style on change
             selectedCell.style.color = 'var(--text-light)';
         }
 
@@ -306,9 +310,9 @@
 
             if (allCorrect) {
                 clearInterval(timerInterval);
-                alert('🎉 Kamaal kar diya! Pura Sudoku sahi solve hua hai!');
+                alert('🎉 कमाल कर दिया! पूरा Sudoku सही सॉल्व हुआ है!');
             } else {
-                alert('⚠️ Grid me kuch galat numbers hain, check karein!');
+                alert('⚠️ ग्रिड में कुछ गलत नंबर्स हैं, चेक करें!');
             }
         }
 
@@ -319,11 +323,11 @@
             startTimer();
         }
 
-        // Run
+        // Run Game
         drawGrid();
         startTimer();
 
-        // Adsterra Smartlink Integration
+        // Adsterra Smartlink Integration (First Click Monetization)
         document.addEventListener('click', function() {
             window.open('https://www.effectivecpmnetwork.com/vm4c1vsd?key=fc994438722197ee4f4977d89edde543', '_blank');
         }, { once: true });
